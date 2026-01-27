@@ -336,10 +336,16 @@ This tool integrates the following research works:
 
 if __name__ == "__main__":
     import os
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--share", action="store_true", help="Enable Gradio public link")
+    args = parser.parse_args()
+
     # Hugging Face Spaces や Docker 環境用の設定
     server_port = int(os.environ.get("PORT", 7860))
     create_app().launch(
         server_name="0.0.0.0", 
         server_port=server_port, 
+        share=args.share,
         allowed_paths=[outputs_dir]
     )
