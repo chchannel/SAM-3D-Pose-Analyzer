@@ -448,6 +448,9 @@ except (AttributeError, RuntimeError):
                 print(f"      ✅ OBJ generated for ID {pid}")
 
         except Exception as e: print(f" Error {pid}: {e}")
+        
+        # 人物ごとの処理が終わるたびにメモリを解放 (Colabでの蓄積を防止)
+        clear_memory()
         finally:
             if os.path.exists(tmp): os.remove(tmp)
             if args.clear_mem: clear_memory()
