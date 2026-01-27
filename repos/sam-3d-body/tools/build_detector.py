@@ -121,6 +121,15 @@ def run_detectron2_vitdet(
         det_out = detector([inputs])
 
     det_instances = det_out[0]["instances"]
+    raw_scores = det_instances.scores.cpu().numpy()
+    raw_classes = det_instances.pred_classes.cpu().numpy()
+    
+    print(f"  -> [DEBUG] ViTDet Raw Detections: {len(raw_scores)}")
+    if len(raw_scores) > 0:
+        print(f"  -> [DEBUG] Classes found: {np.unique(raw_classes)}")
+        print(f"  -> [DEBUG] Top 5 Scores: {[f'{s:.3f}' for s in sorted(raw_scores, reverse=True)[:5]]}")
+        print(f"  -> [DEBUG] Filtering by Class ID: {det_cat_id}, Score > {bbox_thr}")
+
     valid_idx = (det_instances.pred_classes == det_cat_id) & (
         det_instances.scores > bbox_thr
     )
@@ -133,7 +142,7 @@ def run_detectron2_vitdet(
     else:
         boxes = det_instances.pred_boxes.tensor[valid_idx].cpu().numpy()
         scores = det_instances.scores[valid_idx].cpu().numpy()
-        print(f"  -> (ViTDet) Found {len(boxes)} persons. Scores: {[f'{s:.3f}' for s in scores]}")
+        print(f"  -> (ViTDet) Found {len(boxes)} persons above threshold. Final Scores: {[f'{s:.3f}' for s in scores]}")
 
     # Sort boxes to keep a consistent output order
     sorted_indices = np.lexsort(
