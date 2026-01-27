@@ -506,8 +506,9 @@ This tool integrates the following research works:
         cancel_3d_btn.click(kill_running_processes, None, [log_output], cancels=[rec_job])
  
         # --- 画像が入力されたら即座にJPGへ変換してプレビューを更新 ---
-        quick_input_img.upload(ensure_jpg, [quick_input_img], [quick_input_img])
-        input_img.upload(ensure_jpg, [input_img], [input_img])
+        for comp in [quick_input_img, input_img]:
+            comp.upload(ensure_jpg, [comp], [comp])
+            comp.change(ensure_jpg, [comp], [comp])
 
         for b in [save_settings_btn1, save_settings_btn2]:
             b.click(save_settings_fn, [detector_sel, text_prompt, conf_threshold, min_area, inf_type, use_moge, clear_mem, fov_slider, box_scale, nms_thr, auto_zip], [status_msg])
