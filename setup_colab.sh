@@ -40,11 +40,9 @@ def download():
     hf_hub_download(repo_id="facebook/sam-3d-body-dinov3", filename="assets/mhr_model.pt", local_dir="weights/body")
     hf_hub_download(repo_id="facebook/sam-3d-body-dinov3", filename="model_config.yaml", local_dir="weights/body")
     
-    # SAM 3 model
-    if not os.path.exists("weights/body/sam3.pt"):
-        print("Downloading SAM 3 model...")
-        path = hf_hub_download(repo_id="facebook/sam3", filename="model.pt", local_dir="weights/body")
-        os.rename(path, "weights/body/sam3.pt")
+    # SAM 3 model は HumanDetector の内部処理(Online fallback)に任せるか、
+    # もしくは gated repo の規約に同意した状態で build_sam3_image_model が行う自動取得を利用します。
+    pass
 
 if __name__ == "__main__":
     download()
