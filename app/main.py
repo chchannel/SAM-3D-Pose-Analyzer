@@ -165,7 +165,7 @@ def create_app():
                             quick_detector_sel = gr.Dropdown(["sam3", "vitdet"], value=defaults["detector_name"], label="検出モデル")
                             quick_conf_threshold = gr.Slider(0.1, 1.0, value=defaults["conf_threshold"], label="検出感度 (Confidence)")
                             quick_min_area = gr.Slider(100, 50000, value=defaults["min_area"], step=100, label="除外サイズ (Min Area)")
-                            quick_inf_type = gr.Radio(["body (basic)", "full (body+hand)"], value=defaults["inference_type"], label="推論モード")
+                            quick_inf_type = gr.Radio(["body", "full (body+hand)"], value=defaults["inference_type"], label="推論モード")
                             quick_fov_slider = gr.Slider(30, 120, value=defaults["fov"], label="カメラ画角 (FOV)")
                             
                         gr.Markdown("---")
@@ -222,9 +222,9 @@ def create_app():
                                         info="値を下げると検出しやすくなりますが、人間以外を誤検出する可能性も増えます。"
                                     )
                                     min_area = gr.Slider(
-                                        500, 50000, 
+                                        100, 50000, 
                                         value=defaults["min_area"], 
-                                        step=500, 
+                                        step=100, 
                                         label="除外サイズ (Min Area)",
                                         info="この数値より小さい（遠くにいる）人物は無視します。"
                                     )
