@@ -14,20 +14,7 @@ Meta の **SAM 3D Body** をベースに、単一画像から即座に 3D リフ
 
 ---
 
-## 🛠️ 事前準備 (Preparation)
-
-本ツール（Google Colab および ローカル環境）の利用には、以下の準備が必要です。
-
-1.  **Hugging Face アカウントの作成**: [Hugging Face](https://huggingface.co/) でアカウントを作成してください。
-2.  **Access Token の取得**: [Settings -> Access Tokens](https://huggingface.co/settings/tokens) から `read` 権限のトークンを取得してください。
-3.  **モデルの利用承諾**: 以下のモデルリポジトリにアクセスし、各ページの **"Agree and access repository"** ボタンを押して利用を承諾してください。
-    - [facebook/sam-3d-body-dinov3](https://huggingface.co/facebook/sam-3d-body-dinov3)
-    - [facebook/sam3](https://huggingface.co/facebook/sam3)
-
-> [!IMPORTANT]
-> **Google Colab ユーザーへ**: 起動時にトークンの入力を求められます。承諾が済んでいないと、モデルのダウンロード時にエラーが発生します。
-
-## 📸 主な機能 (Features)
+##  主な機能 (Features)
 
 - **⚡ クイック復元 (1人専用)**: 画像を投げてボタンを押すだけで、最速（約60秒）で 3D 化が可能です。AI が人物を一瞬で見つけ出し、ボーンとメッシュを生成します。
 - **👥 アドバンス復元 (詳細設定)**: 複数人のスキャン、特定の人物の選択、背景の奥行き（MoGe）を考慮した配置など、こだわりの設定が可能です。
@@ -46,12 +33,23 @@ Meta の **SAM 3D Body** をベースに、単一画像から即座に 3D リフ
 
 ## 🚀 実行方法 (Quick Start)
 
-### 1. Google Colab
+本ツールを利用するには、事前に **Hugging Face でのモデル利用承諾** が必要です。
+
+### 🛠️ 事前準備
+1.  **Hugging Face アカウント作成 & トークン取得**: [Access Tokens](https://huggingface.co/settings/tokens) から `read` トークンを取得。
+2.  **モデルの利用承諾**: 以下のリポジトリで **"Agree and access repository"** をクリック。
+    - [facebook/sam-3d-body-dinov3](https://huggingface.co/facebook/sam-3d-body-dinov3)
+    - [facebook/sam3](https://huggingface.co/facebook/sam3)
+
+---
+
+### 1. Google Colab (推奨)
 ブラウザだけで今すぐ試せます。
 
 - [**SAM 3D Pose Analyzer on Colab**](https://colab.research.google.com/github/chchannel/SAM-3D-Pose-Analyzer/blob/main/sam_3d_pose_analyzer_colab.ipynb)
-    - ※ノートブックを開き、各セルを順に実行してください。
-    - **⚡ クイック復元タブ** を使えば、約 60〜80 秒で 3D モデルが手に入ります。
+    - **Step 1**: 実行時に Hugging Face トークンを入力します。
+    - **Step 2**: 環境構築（約 10〜15 分）。
+    - **Step 3**: 起動後の **⚡ クイック復元タブ** を使えば、約 60秒で 3D モデルが手に入ります。
 
 ### 2. ローカル環境 (Local Installation)
 WSL2 または Linux 環境での動作を想定しています。
