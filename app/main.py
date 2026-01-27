@@ -97,6 +97,14 @@ def ensure_jpg(image_path):
         # 究極に安全な透過除去: 
         # 1. どんな入力でもRGBAに変換
         rgba = img.convert("RGBA")
+        
+        # 診断ログ
+        import numpy as np
+        alpha_data = np.array(rgba)[:,:,3]
+        avg_alpha = np.mean(alpha_data)
+        min_alpha = np.min(alpha_data)
+        print(f"🔍 DEBUG IMG: mode={img.mode}, alpha_avg={avg_alpha:.2f}, min_alpha={min_alpha} (255=no transparency)")
+        
         # 2. 真っ白な(255,255,255)下地を作成
         white_bg = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
         # 3. 下地の上に画像を重ねる
@@ -140,6 +148,7 @@ def create_app():
                         quick_input_img = gr.Image(label="人物が1人写っている画像を選択", type="filepath", height=350)
                         quick_converted_img = gr.Image(label="📸 変換後 (Preview)", type="filepath", interactive=False, height=350, visible=False)
                         quick_run_btn = gr.Button("⚡ 3D復元を一括実行", variant="primary", size="lg")
+                        quick_cancel_btn = gr.Button("⏹️ 停止", variant="stop")
                         quick_status = gr.Markdown("画像をアップロードしてボタンを押してください")
                         
                         gr.Markdown("---")
@@ -496,11 +505,12 @@ This tool integrates the following research works:
                 last_val = val
                 yield val[0], gr.update(value=val[0], visible=True), val[3], val[5], val[4], val[7], val[6], val[8]
         
-        quick_run_btn.click(
+        quick_job = quick_run_btn.click(
             on_quick_recovery, 
             [quick_input_img], 
             [quick_input_img, quick_converted_img, quick_3d_view, quick_fbx, quick_bvh, quick_zip, quick_obj, quick_status]
         )
+        quick_cancel_btn.click(kill_running_processes, None, [quick_status], cancels=[quick_job])
 
         rec_job = run_3d_btn.click(on_3d_recovery, [input_img, detector_sel, text_prompt, conf_threshold, min_area, box_scale, nms_thr, target_id_checks, inf_type, use_moge, clear_mem, fov_slider, auto_zip, gr.State(False)], [input_img, vis_skeleton, vis_moge, interactive_3d, output_bvh, output_fbx, output_obj, output_zip, status_msg, log_output])
         cancel_3d_btn.click(kill_running_processes, None, [log_output], cancels=[rec_job])
