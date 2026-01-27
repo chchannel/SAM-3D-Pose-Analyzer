@@ -548,31 +548,7 @@ This tool integrates the following research works:
         
         open_folder_btn.click(lambda: subprocess.run(["explorer.exe", "."], cwd=outputs_dir), None, None)
 
-        # === タブ間での設定同期 (全コンポーネント定義後に実行) ===
-        sync_args = dict(show_progress="hidden")
-        
-        quick_detector_sel.change(lambda x: x, [quick_detector_sel], [detector_sel], **sync_args)
-        detector_sel.change(lambda x: x, [detector_sel], [quick_detector_sel], **sync_args)
-        
-        # スライダー本体のドラッグ操作 (.release) と 数値入力 (.change) の両方をカバー
-        # show_progress="hidden" により、更新中の「バーが消える」現象（スピナー表示）を防止
-        quick_conf_threshold.release(lambda x: x, [quick_conf_threshold], [conf_threshold], **sync_args)
-        quick_conf_threshold.change(lambda x: x, [quick_conf_threshold], [conf_threshold], **sync_args)
-        conf_threshold.release(lambda x: x, [conf_threshold], [quick_conf_threshold], **sync_args)
-        conf_threshold.change(lambda x: x, [conf_threshold], [quick_conf_threshold], **sync_args)
-        
-        quick_min_area.release(lambda x: x, [quick_min_area], [min_area], **sync_args)
-        quick_min_area.change(lambda x: x, [quick_min_area], [min_area], **sync_args)
-        min_area.release(lambda x: x, [min_area], [quick_min_area], **sync_args)
-        min_area.change(lambda x: x, [min_area], [quick_min_area], **sync_args)
-        
-        quick_inf_type.change(lambda x: x, [quick_inf_type], [inf_type], **sync_args)
-        inf_type.change(lambda x: x, [inf_type], [quick_inf_type], **sync_args)
-        
-        quick_fov_slider.release(lambda x: x, [quick_fov_slider], [fov_slider], **sync_args)
-        quick_fov_slider.change(lambda x: x, [quick_fov_slider], [fov_slider], **sync_args)
-        fov_slider.release(lambda x: x, [fov_slider], [quick_fov_slider], **sync_args)
-        fov_slider.change(lambda x: x, [fov_slider], [quick_fov_slider], **sync_args)
+        open_folder_btn.click(lambda: subprocess.run(["explorer.exe", "."], cwd=outputs_dir), None, None)
 
     return app
 
