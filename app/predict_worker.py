@@ -134,7 +134,17 @@ if __name__ == "__main__":
         if max(pil_img.size) > 2048:
             print(f"📏 Resizing image from {pil_img.size} to max 2048px...")
             pil_img.thumbnail((2048, 2048), PIL.Image.LANCZOS)
-        img_bgr = cv2.cvtColor(np.array(pil_img.convert("RGB")), cv2.COLOR_RGB2BGR)
+        
+        # 透過情報を白背景で埋めてRGB化 (重要: 単純な convert("RGB") は背景が黒くなる)
+        if pil_img.mode in ("RGBA", "LA", "P"):
+            canvas = PIL.Image.new("RGBA", pil_img.size, (255, 255, 255, 255))
+            pil_img_rgba = pil_img.convert("RGBA")
+            canvas.paste(pil_img_rgba, (0, 0), pil_img_rgba)
+            pil_img = canvas.convert("RGB")
+        else:
+            pil_img = pil_img.convert("RGB")
+            
+        img_bgr = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
     except Exception as e:
         print(f"❌ ERROR: Failed to load image {args.image_path}: {e}")
         sys.exit(1)

@@ -93,30 +93,19 @@ def ensure_jpg(image_path):
     try:
         img = Image.open(image_path)
         
-        # 透過や特定のモードを処理
-        if img.mode in ("RGBA", "P", "LA") or (img.mode == "RGB" and not image_path.lower().endswith((".jpg", ".jpeg"))):
-            # 白背景を作成して合成
-            new_img = Image.new("RGB", img.size, (255, 255, 255))
-            if img.mode in ("RGBA", "LA"):
-                # アルファチャンネルをマスクとして使用
-                mask = img.split()[-1]
-                new_img.paste(img, mask=mask)
-            else:
-                # パレット画像などの場合はRGBAに変換してから合成
-                rgba_img = img.convert("RGBA")
-                mask = rgba_img.split()[-1]
-                new_img.paste(rgba_img, mask=mask)
-            img = new_img
-        else:
-            # 透過がない場合も一貫性のために強制的にRGB JPGとして保存し直す
-            img = img.convert("RGB")
+        # 透過除去とJPG変換を一括で行う
+        # モードに関わらず一度RGBA化して白背景に重ねるのが最も確実
+        canvas = Image.new("RGBA", img.size, (255, 255, 255, 255))
+        img_rgba = img.convert("RGBA")
+        canvas.paste(img_rgba, (0, 0), img_rgba)
+        img_final = canvas.convert("RGB")
             
         # ミリ秒を含めて完全にユニークなファイル名を作成（ブラウザキャッシュ回避）
         import time
         ts = int(time.time() * 1000)
         path_jpg = os.path.join(outputs_dir, f"input_rec_{ts}_mppa_cv_.jpg")
-        img.save(path_jpg, "JPEG", quality=95)
-        print(f"📸 Image formatted to JPG: {path_jpg}")
+        img_final.save(path_jpg, "JPEG", quality=95)
+        print(f"📸 Image optimized to white-background JPG: {path_jpg}")
         return path_jpg
     except Exception as e:
         print(f"⚠️ Image conversion failed: {e}")
