@@ -270,7 +270,7 @@ def create_app():
                                 
                             with gr.Column(scale=3):
                                 det_status_msg = gr.Markdown("")
-                                det_preview = gr.Gallery(label="ID付きプレビュー", columns=3, height="auto")
+                                det_preview = gr.Gallery(label="ID付きプレビュー", columns=3, height="auto", format="png")
                                 gr.Markdown("""
 ### ⏭️ 次のステップ (重要)
 1. 上の画像で、推論したい人物の **ID (番号)** を探します。
@@ -347,8 +347,8 @@ def create_app():
                                 gr.Markdown("### 🖼️ プレビュー")
                                 with gr.Group():
                                     with gr.Row():
-                                        vis_skeleton = gr.Image(label="スケルトン (Pose/Exact)")
-                                        vis_moge = gr.Image(label="深度マップ (MoGe/Exact)")
+                                        vis_skeleton = gr.Image(label="スケルトン (Pose/Exact)", format="png")
+                                        vis_moge = gr.Image(label="深度マップ (MoGe/Exact)", format="png")
                                     interactive_3d = gr.Model3D(label="3D プレビュー (回転・拡大可能)", height=500)
                                 
                                 with gr.Group():
