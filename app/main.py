@@ -243,22 +243,8 @@ def create_app():
                                             info="値が小さいほど、重なり合った人物の重複検出を厳しく削除します。"
                                         )
 
-                                # タブ間での設定同期
-                                quick_detector_sel.change(lambda x: x, [quick_detector_sel], [detector_sel])
-                                detector_sel.change(lambda x: x, [detector_sel], [quick_detector_sel])
-                                
-                                quick_conf_threshold.change(lambda x: x, [quick_conf_threshold], [conf_threshold])
-                                conf_threshold.change(lambda x: x, [conf_threshold], [quick_conf_threshold])
-                                
                                 quick_min_area.change(lambda x: x, [quick_min_area], [min_area])
                                 min_area.change(lambda x: x, [min_area], [quick_min_area])
-                                
-                                quick_inf_type.change(lambda x: x, [quick_inf_type], [inf_type])
-                                inf_type.change(lambda x: x, [inf_type], [quick_inf_type])
-                                
-                                quick_fov_slider.change(lambda x: x, [quick_fov_slider], [fov_slider])
-                                fov_slider.change(lambda x: x, [fov_slider], [quick_fov_slider])
-                                
                                 
                                 with gr.Row():
                                     det_btn = gr.Button("🔍 検出開始", variant="primary", scale=2)
@@ -561,6 +547,22 @@ This tool integrates the following research works:
             b.click(save_settings_fn, [detector_sel, text_prompt, conf_threshold, min_area, inf_type, use_moge, clear_mem, fov_slider, box_scale, nms_thr, auto_zip], [status_msg])
         
         open_folder_btn.click(lambda: subprocess.run(["explorer.exe", "."], cwd=outputs_dir), None, None)
+
+        # === タブ間での設定同期 (全コンポーネント定義後に実行) ===
+        quick_detector_sel.change(lambda x: x, [quick_detector_sel], [detector_sel])
+        detector_sel.change(lambda x: x, [detector_sel], [quick_detector_sel])
+        
+        quick_conf_threshold.change(lambda x: x, [quick_conf_threshold], [conf_threshold])
+        conf_threshold.change(lambda x: x, [conf_threshold], [quick_conf_threshold])
+        
+        quick_min_area.change(lambda x: x, [quick_min_area], [min_area])
+        min_area.change(lambda x: x, [min_area], [quick_min_area])
+        
+        quick_inf_type.change(lambda x: x, [quick_inf_type], [inf_type])
+        inf_type.change(lambda x: x, [inf_type], [quick_inf_type])
+        
+        quick_fov_slider.change(lambda x: x, [quick_fov_slider], [fov_slider])
+        fov_slider.change(lambda x: x, [fov_slider], [quick_fov_slider])
 
     return app
 
