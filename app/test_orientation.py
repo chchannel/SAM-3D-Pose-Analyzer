@@ -32,20 +32,39 @@ def main():
     with open(JSON_PATH, "w") as f:
         json.dump(test_json, f)
 
-    print(f"🚀 Running Blender with rotation-aware script...")
-    cmd = [
-        "blender", "--background", "--python", BLENDER_SCRIPT,
-        "--", JSON_PATH, FBX_PATH
-    ]
-    
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    
-    if result.returncode == 0:
-        print(f"✅ Success! FBX generated at: {FBX_PATH}")
-        print("You can now open this FBX in Blender to check if the character is rotated correctly.")
-    else:
-        print(f"❌ Blender Error:\n{result.stderr}")
-        print(result.stdout)
+    # 出力パス設定
+    FBX_PATH = os.path.join(OUTPUT_DIR, "output_test_rotation.fbx")
+    BVH_LEGACY = os.path.join(OUTPUT_DIR, "test_legacy_fix.bvh")
+    BVH_MODERN_STD = os.path.join(OUTPUT_DIR, "test_modern_standard.bvh")
+    BVH_MODERN_FIX = os.path.join(OUTPUT_DIR, "test_modern_head_fix.bvh")
+
+    LIB_DIR = os.path.join(BASE_DIR, "convert", "lib")
+    BLENDER_BUILDER = os.path.join(LIB_DIR, "blender_humanoid_builder_test_rotation.py")
+    BLENDER_BVH_STD = os.path.join(LIB_DIR, "blender_bvh_crysta.py")
+    BLENDER_BVH_FIX = os.path.join(LIB_DIR, "blender_bvh_crysta_head_fix.py")
+    LEGACY_CONVERTER = os.path.join(BASE_DIR, "convert", "convert_to_bvh.py")
+
+    print(f"🚀 [1/4] Generating FBX (Head-to-Spine fixed builder)...")
+    cmd_fbx = ["blender", "--background", "--python", BLENDER_BUILDER, "--", JSON_PATH, FBX_PATH]
+    subprocess.run(cmd_fbx, capture_output=True)
+
+    print(f"🚀 [2/4] Generating BVH from FBX (Standard Converter)...")
+    cmd_bvh_std = ["blender", "--background", "--python", BLENDER_BVH_STD, "--", FBX_PATH, BVH_MODERN_STD]
+    subprocess.run(cmd_bvh_std, capture_output=True)
+
+    print(f"🚀 [3/4] Generating BVH from FBX (Post-Import Head Fix)...")
+    cmd_bvh_fix = ["blender", "--background", "--python", BLENDER_BVH_FIX, "--", FBX_PATH, BVH_MODERN_FIX]
+    subprocess.run(cmd_bvh_fix, capture_output=True)
+
+    print(f"🚀 [4/4] Generating Legacy BVH (JSON direct converter)...")
+    cmd_legacy = [sys.executable, LEGACY_CONVERTER, NPY_PATH, BVH_LEGACY]
+    subprocess.run(cmd_legacy, capture_output=True)
+
+    print(f"\n✅ All tests completed! Check these files in {OUTPUT_DIR}:")
+    print(f"  1. {os.path.basename(FBX_PATH)} (FBX w/ rotation & head fix)")
+    print(f"  2. {os.path.basename(BVH_LEGACY)} (Legacy JSON->BVH fix)")
+    print(f"  3. {os.path.basename(BVH_MODERN_STD)} (Modern FBX->BVH)")
+    print(f"  4. {os.path.basename(BVH_MODERN_FIX)} (Modern FBX->BVH w/ post-import fix)")
 
 if __name__ == "__main__":
     main()
