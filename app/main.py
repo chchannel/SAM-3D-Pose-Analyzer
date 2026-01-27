@@ -612,7 +612,7 @@ This tool integrates the following research works:
         
         # 設定の相互読み込み機能
         def link_settings_fn(det, conf, area, inf, fov):
-            return det, conf, area, inf, fov, "✅ 他のモードから設定を読み込みました（保存ボタンで確定してください）"
+            return det, conf, area, inf, fov, "✅ 他のモードから設定を読み込みました"
 
         quick_load_adv_btn.click(
             link_settings_fn,
