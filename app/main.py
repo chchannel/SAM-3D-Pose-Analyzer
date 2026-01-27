@@ -47,35 +47,46 @@ def cleanup_uploads():
                 except: pass
 
 def load_settings():
-    default_settings = {
+    base = {
         "detector_name": "sam3", "text_prompt": "person", "conf_threshold": 0.5, "min_area": 100,
-        "inference_type": "full (body+hand)",
-        "use_moge": True,
-        "clear_mem": True,
-        "fov": 70.0,
-        "box_scale": 1.2,
-        "nms_thr": 0.3,
-        "auto_zip": True
+        "inference_type": "full (body+hand)", "use_moge": True, "clear_mem": True,
+        "fov": 70.0, "box_scale": 1.2, "nms_thr": 0.3, "auto_zip": True
     }
+    defaults = {"quick": base.copy(), "advanced": base.copy()}
+    # クイック復元の初期値微調整
+    defaults["quick"]["inference_type"] = "body"
+
     if os.path.exists(settings_path):
         try:
             with open(settings_path, "r", encoding="utf-8") as f:
-                loaded = json.load(f); default_settings.update(loaded)
+                loaded = json.load(f)
+                if "quick" in loaded or "advanced" in loaded:
+                    if "quick" in loaded: defaults["quick"].update(loaded["quick"])
+                    if "advanced" in loaded: defaults["advanced"].update(loaded["advanced"])
+                else:
+                    # 以前のフラットな形式からの移行
+                    defaults["quick"].update(loaded)
+                    defaults["advanced"].update(loaded)
         except: pass
-    return default_settings
+    return defaults
 
-def save_settings_fn(detector, text_prompt, conf_threshold, min_area, inference_type, use_moge, clear_mem, fov, box_scale, nms_thr, auto_zip):
+def save_settings_fn(mode, detector, text_prompt, conf_threshold, min_area, inference_type, use_moge, clear_mem, fov, box_scale, nms_thr, auto_zip):
     try:
-        settings = {
+        # まず既存設定を読み込む
+        current = load_settings()
+        new_data = {
             "detector_name": detector, "text_prompt": text_prompt, "conf_threshold": conf_threshold, "min_area": min_area,
             "inference_type": inference_type, "use_moge": use_moge, "clear_mem": clear_mem,
             "fov": fov, "box_scale": box_scale, "nms_thr": nms_thr, "auto_zip": auto_zip
         }
+        current[mode] = new_data
+        
         with open(settings_path, "w", encoding="utf-8") as f:
-            json.dump(settings, f, indent=4, ensure_ascii=False)
-        return "✅ 設定をデフォルトとして保存しました", "✅ 保存完了", detector, conf_threshold, min_area, inference_type, fov
+            json.dump(current, f, indent=4, ensure_ascii=False)
+            
+        return f"✅ {mode}の設定を保存しました", "✅ 保存完了"
     except Exception as e:
-        return f"❌ 保存失敗: {e}", f"❌ 失敗: {e}", detector, conf_threshold, min_area, inference_type, fov
+        return f"❌ 保存失敗: {e}", f"❌ 失敗: {e}"
 
 def run_worker_cmd_yield(cmd, desc):
     global running_processes
@@ -165,11 +176,11 @@ def create_app():
                         quick_log = gr.Textbox(label="実行ログ", lines=6, max_lines=10, interactive=False)
                         
                         with gr.Accordion("⚙️ クイック設定", open=False):
-                            quick_detector_sel = gr.Dropdown(["sam3", "vitdet"], value=defaults["detector_name"], label="検出モデル")
-                            quick_conf_threshold = gr.Slider(0.1, 1.0, value=defaults["conf_threshold"], label="検出感度 (Confidence)")
-                            quick_min_area = gr.Slider(100, 50000, value=defaults["min_area"], step=100, label="除外サイズ (Min Area)")
-                            quick_inf_type = gr.Radio(["body", "full (body+hand)"], value=defaults["inference_type"], label="推論モード")
-                            quick_fov_slider = gr.Slider(30, 120, value=defaults["fov"], label="カメラ画角 (FOV)")
+                            quick_detector_sel = gr.Dropdown(["sam3", "vitdet"], value=defaults["quick"]["detector_name"], label="検出モデル")
+                            quick_conf_threshold = gr.Slider(0.1, 1.0, value=defaults["quick"]["conf_threshold"], label="検出感度 (Confidence)")
+                            quick_min_area = gr.Slider(100, 50000, value=defaults["quick"]["min_area"], step=100, label="除外サイズ (Min Area)")
+                            quick_inf_type = gr.Radio(["body", "full (body+hand)"], value=defaults["quick"]["inference_type"], label="推論モード")
+                            quick_fov_slider = gr.Slider(30, 120, value=defaults["quick"]["fov"], label="カメラ画角 (FOV)")
                             quick_save_btn = gr.Button("💾 設定を保存", size="sm")
                             
                         gr.Markdown("---")
@@ -210,24 +221,24 @@ def create_app():
                                 with gr.Group():
                                     detector_sel = gr.Dropdown(
                                         ["sam3", "vitdet"], 
-                                        value=defaults["detector_name"], 
+                                        value=defaults["advanced"]["detector_name"], 
                                         label="検出モデル",
                                         info="sam3: イラスト対応・高精度。 vitdet: 写真に強く高速ですが、イラストの検出は苦手です。"
                                     )
                                     text_prompt = gr.Textbox(
-                                        value=defaults["text_prompt"], 
+                                        value=defaults["advanced"]["text_prompt"], 
                                         label="検索ターゲット",
                                         info="検出したいものを言葉で指定します。通常は 'person' でOKです。"
                                     )
                                     conf_threshold = gr.Slider(
                                         0.1, 1.0, 
-                                        value=defaults["conf_threshold"], 
+                                        value=defaults["advanced"]["conf_threshold"], 
                                         label="検出感度 (Confidence)",
                                         info="値を下げると検出しやすくなりますが、人間以外を誤検出する可能性も増えます。"
                                     )
                                     min_area = gr.Slider(
                                         100, 50000, 
-                                        value=defaults["min_area"], 
+                                        value=defaults["advanced"]["min_area"], 
                                         step=100, 
                                         label="除外サイズ (Min Area)",
                                         info="この数値より小さい（遠くにいる）人物は無視します。"
@@ -235,14 +246,14 @@ def create_app():
                                     with gr.Accordion("🛠️ 検出アドバンス設定", open=False):
                                         box_scale = gr.Slider(
                                             1.0, 2.0, 
-                                            value=defaults["box_scale"], 
+                                            value=defaults["advanced"]["box_scale"], 
                                             step=0.1,
                                             label="ボックスの余白 (Box Scale)",
                                             info="人物をどれくらい広めに切り出すか。姿勢推定の精度に影響します。"
                                         )
                                         nms_thr = gr.Slider(
                                             0.1, 1.0, 
-                                            value=defaults["nms_thr"], 
+                                            value=defaults["advanced"]["nms_thr"], 
                                             label="重複除去 (NMS Threshold)",
                                             info="値が小さいほど、重なり合った人物の重複検出を厳しく削除します。"
                                         )
@@ -272,17 +283,17 @@ def create_app():
                                 gr.Markdown("### ⚙️ 推論設定")
                                 inf_type = gr.Dropdown(
                                     ["full (body+hand)", "body", "hand"], 
-                                    value=defaults["inference_type"], 
+                                    value=defaults["advanced"]["inference_type"], 
                                     label="推論モード",
                                     info="bodyは全身のみ、fullは指先まで細かく復元を試みます。"
                                 )
                                 use_moge = gr.Checkbox(
-                                    value=defaults["use_moge"], 
+                                    value=defaults["advanced"]["use_moge"], 
                                     label="空間配置 (MoGe2) 有効",
                                     info="写真を解析して、3D空間上の正しい位置に人物を立たせます。"
                                 )
                                 clear_mem = gr.Checkbox(
-                                    value=defaults["clear_mem"], 
+                                    value=defaults["advanced"]["clear_mem"], 
                                     label="VRAMメモリ解放",
                                     info="完了ごとにメモリを掃除します。GPUメモリが少ない(8GB以下)場合はON推奨です。"
                                 )
@@ -291,7 +302,7 @@ def create_app():
                                 with gr.Group():
                                     fov_slider = gr.Slider(
                                         30, 120, 
-                                        value=defaults["fov"], 
+                                        value=defaults["advanced"]["fov"], 
                                         step=1,
                                         label="カメラ画角 (FOV)",
                                         info="広角レンズ(iPhone等)なら70~80、標準なら50前後に調整してください。"
@@ -304,7 +315,7 @@ def create_app():
                                 save_settings_btn2 = gr.Button("💾 設定保存", size="sm")
 
                                 auto_zip = gr.Checkbox(
-                                    value=defaults.get("auto_zip", True), 
+                                    value=defaults["advanced"].get("auto_zip", True), 
                                     label="📦 完了時に ZIP を自動生成",
                                     info="生成されたすべてのファイルを1つのZIPにまとめます。Colabでの一括ダウンロードに便利です。"
                                 )
@@ -577,18 +588,18 @@ This tool integrates the following research works:
         rec_job = run_3d_btn.click(on_3d_recovery, [input_img, detector_sel, text_prompt, conf_threshold, min_area, box_scale, nms_thr, target_id_checks, inf_type, use_moge, clear_mem, fov_slider, auto_zip, gr.State(False)], [input_img, vis_skeleton, vis_moge, interactive_3d, output_bvh, output_fbx, output_obj, output_zip, status_msg, log_output])
         cancel_3d_btn.click(kill_running_processes, None, [log_output], cancels=[rec_job])
 
-        # 設定保存のバインド (保存時に両方のタブの値を同期させる)
+        # 設定保存のバインド
         for b in [save_settings_btn1, save_settings_btn2]:
             b.click(
                 save_settings_fn, 
-                [detector_sel, text_prompt, conf_threshold, min_area, inf_type, use_moge, clear_mem, fov_slider, box_scale, nms_thr, auto_zip], 
-                [status_msg, det_status_msg, quick_detector_sel, quick_conf_threshold, quick_min_area, quick_inf_type, quick_fov_slider]
+                [gr.State("advanced"), detector_sel, text_prompt, conf_threshold, min_area, inf_type, use_moge, clear_mem, fov_slider, box_scale, nms_thr, auto_zip], 
+                [status_msg, det_status_msg]
             )
         
         quick_save_btn.click(
             save_settings_fn, 
-            [quick_detector_sel, text_prompt, quick_conf_threshold, quick_min_area, quick_inf_type, use_moge, clear_mem, quick_fov_slider, box_scale, nms_thr, auto_zip], 
-            [quick_status, status_msg, detector_sel, conf_threshold, min_area, inf_type, fov_slider]
+            [gr.State("quick"), quick_detector_sel, text_prompt, quick_conf_threshold, quick_min_area, quick_inf_type, use_moge, clear_mem, quick_fov_slider, box_scale, nms_thr, auto_zip], 
+            [quick_status, status_msg]
         )
         
         open_folder_btn.click(lambda: subprocess.run(["explorer.exe", "."], cwd=outputs_dir), None, None)
