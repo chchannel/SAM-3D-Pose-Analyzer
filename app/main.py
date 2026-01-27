@@ -35,6 +35,15 @@ def kill_running_processes():
     running_processes = []
     return "⏹️ 処理を中断しました。"
 
+def cleanup_uploads():
+    """uploads フォルダの古い一時ファイルを削除する"""
+    if os.path.exists(uploads_dir):
+        for f in os.listdir(uploads_dir):
+            if "_mppa_cv_" in f:
+                try:
+                    os.remove(os.path.join(uploads_dir, f))
+                except: pass
+
 def load_settings():
     default_settings = {
         "detector_name": "sam3", "text_prompt": "person", "conf_threshold": 0.5, "min_area": 1000,
@@ -302,8 +311,7 @@ def create_app():
                                 gr.Markdown("> [!TIP]\n> **Google Colab ユーザーへ**: 上記の「ZIP でダウンロード」ボタンを使用してください。「フォルダを開く」はColabでは動作しません。")
 
                                 gr.HTML("<hr>")
-                                gr.Markdown("### 📜 実行ログ")
-                                log_output = gr.Textbox(label="", lines=12, max_lines=20, interactive=False)
+                                # log_output は右カラムへ移動
 
                             with gr.Column(scale=3):
                                 gr.Markdown("### 🖼️ プレビュー (v0.5 暫定版)")
@@ -351,10 +359,13 @@ This tool integrates the following research works:
     - **本ツールで生成したデータ（3Dモデル等）は商用利用可能です。**
 """)
                                 
+                                gr.Markdown("### 📜 実行ログ")
+                                log_output = gr.Textbox(label="", lines=12, max_lines=20, interactive=False)
                                 status_msg = gr.Markdown("")
 
         # --- Logic ---
         def on_detect(image, detector, text, conf, area, b_scale, nms, is_lightning, progress=gr.Progress()):
+            cleanup_uploads() # 新しい処理の前に古いアップロードを掃除
             image = ensure_jpg(image)
             if not image: yield image, [], {}, "", gr.update(choices=[], value=[]), "画像なし", "", ""
             
@@ -393,6 +404,7 @@ This tool integrates the following research works:
         deselect_all_btn.click(lambda: [], None, [target_id_checks])
 
         def on_3d_recovery(image, detector, text, conf, area, b_scale, nms, targets, inf_mode, moge_active, clear, fov, zip_active, is_lightning, progress=gr.Progress()):
+            cleanup_uploads() # 新しい処理の前に古いアップロードを掃除
             image = ensure_jpg(image)
             if not image: yield None, None, None, [], [], [], None, "画像なし", ""
             # targetsが空（未選択）の場合は「全員（None）」として扱う
