@@ -161,11 +161,18 @@ def create_app():
                         quick_status = gr.Markdown("画像をアップロードしてボタンを押してください")
                         quick_log = gr.Textbox(label="実行ログ", lines=6, max_lines=10, interactive=False)
                         
+                        with gr.Accordion("⚙️ クイック設定", open=False):
+                            quick_detector_sel = gr.Dropdown(["sam3", "vitdet"], value=defaults["detector_name"], label="検出モデル")
+                            quick_conf_threshold = gr.Slider(0.1, 1.0, value=defaults["conf_threshold"], label="検出感度 (Confidence)")
+                            quick_min_area = gr.Slider(100, 50000, value=defaults["min_area"], step=100, label="除外サイズ (Min Area)")
+                            quick_inf_type = gr.Radio(["body (basic)", "full (body+hand)"], value=defaults["inference_type"], label="推論モード")
+                            quick_fov_slider = gr.Slider(30, 120, value=defaults["fov"], label="カメラ画角 (FOV)")
+                            
                         gr.Markdown("---")
                         gr.Markdown("""
 #### 💡 このモードの特徴
-- **高速**: 1人の画像に最適化された設定で処理します。
 - **全自動**: 人物検出と3D復元をワンクリックで連続実行します。
+- **多人数対応**: 画像内の全員を自動でスキャンし、横に並べて配置します。
 - **ボーン重視**: 背景の配置(MoGe)をオフにして計算を軽量化しています。
 """)
 
@@ -235,6 +242,22 @@ def create_app():
                                             label="重複除去 (NMS Threshold)",
                                             info="値が小さいほど、重なり合った人物の重複検出を厳しく削除します。"
                                         )
+
+                                # タブ間での設定同期
+                                quick_detector_sel.change(lambda x: x, [quick_detector_sel], [detector_sel])
+                                detector_sel.change(lambda x: x, [detector_sel], [quick_detector_sel])
+                                
+                                quick_conf_threshold.change(lambda x: x, [quick_conf_threshold], [conf_threshold])
+                                conf_threshold.change(lambda x: x, [conf_threshold], [quick_conf_threshold])
+                                
+                                quick_min_area.change(lambda x: x, [quick_min_area], [min_area])
+                                min_area.change(lambda x: x, [min_area], [quick_min_area])
+                                
+                                quick_inf_type.change(lambda x: x, [quick_inf_type], [inf_type])
+                                inf_type.change(lambda x: x, [inf_type], [quick_inf_type])
+                                
+                                quick_fov_slider.change(lambda x: x, [quick_fov_slider], [fov_slider])
+                                fov_slider.change(lambda x: x, [fov_slider], [quick_fov_slider])
                                 
                                 
                                 with gr.Row():
@@ -497,23 +520,20 @@ This tool integrates the following research works:
                 yield image, v_skel if os.path.exists(v_skel) else None, v_moge if os.path.exists(v_moge) else None, target_glb, bvh, fbx, obj, final_zip, "✅ 完了", log_c
 
         # --- One-Click Events ---
-        def on_quick_recovery(image, progress=gr.Progress()):
+        def on_quick_recovery(image, det_name, conf, area, inf_mode, fov, progress=gr.Progress()):
             # 内部的に lightning=True で on_3d_recovery を呼び出す
-            # 最初の on_detect は不要（on_3d_recovery内部のコマンドが detector を走らせるため）
-            # ただし、UIへのフィードバックのために yield 構造を合わせる必要あり
-            
             # on_3d_recovery の引数構成に合わせる
             # (image, detector, text, conf, area, b_scale, nms, targets, inf_mode, moge_active, clear, fov, zip_active, is_lightning)
             gen = on_3d_recovery(
                 image, 
-                defaults["detector_name"], defaults["text_prompt"], 
-                defaults["conf_threshold"], defaults["min_area"],
+                det_name, defaults["text_prompt"], 
+                conf, area,
                 defaults["box_scale"], defaults["nms_thr"],
                 [], # targets=空 (Auto-Recovery)
-                "body", # inf_mode (Lightning強制)
+                inf_mode, 
                 False,  # moge_active (Lightning強制)
                 defaults["clear_mem"],
-                defaults["fov"],
+                fov,
                 defaults["auto_zip"],
                 True, # is_lightning=True
                 progress=progress
@@ -528,7 +548,7 @@ This tool integrates the following research works:
         
         quick_job = quick_run_btn.click(
             on_quick_recovery, 
-            [quick_input_img], 
+            [quick_input_img, quick_detector_sel, quick_conf_threshold, quick_min_area, quick_inf_type, quick_fov_slider], 
             [quick_input_img, quick_3d_view, quick_fbx, quick_bvh, quick_zip, quick_obj, quick_status, quick_log]
         )
         quick_cancel_btn.click(kill_running_processes, None, [quick_log], cancels=[quick_job])
