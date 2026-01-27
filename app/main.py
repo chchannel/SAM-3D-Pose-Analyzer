@@ -205,12 +205,17 @@ def create_app():
                         
                         save_settings_btn2 = gr.Button("💾 設定保存", size="sm")
 
-                        gr.HTML("<hr>")
                         gr.Markdown("### 📂 生成ファイル")
-                        output_bvh = gr.File(label="BVH (Motion)", file_count="multiple")
-                        output_fbx = gr.File(label="FBX (Mesh)", file_count="multiple")
-                        output_obj = gr.File(label="OBJ (Static Mesh)", file_count="multiple")
-                        open_folder_btn = gr.Button("📂 フォルダを開く", size="sm")
+                        with gr.Group():
+                            output_bvh = gr.File(label="🗂️ BVH (Motion)", file_count="multiple", interactive=False)
+                            output_fbx = gr.File(label="🗂️ FBX (Mesh)", file_count="multiple", interactive=False)
+                            output_obj = gr.File(label="🗂️ OBJ (Static Mesh)", file_count="multiple", interactive=False)
+                        
+                        gr.Markdown("---")
+                        output_zip = gr.File(label="📦 全ファイルを ZIP でダウンロード", interactive=False)
+                        
+                        open_folder_btn = gr.Button("📁 フォルダを開く (Local Only)", size="sm")
+                        gr.Markdown("> [!TIP]\n> **Google Colab ユーザーへ**: 上記の「ZIP でダウンロード」ボタンを使用してください。「フォルダを開く」はColabでは動作しません。")
 
                         gr.HTML("<hr>")
                         gr.Markdown("### 📜 実行ログ")
@@ -265,12 +270,16 @@ This tool integrates the following research works:
                         status_msg = gr.Markdown("")
 
         # --- Logic ---
-        def on_detect(image, detector, text, conf, area, b_scale, nms):
+        def on_detect(image, detector, text, conf, area, b_scale, nms, progress=gr.Progress()):
             if not image: yield [], {}, "", gr.update(choices=[], value=[]), "画像なし", ""
             cmd = [sys.executable, worker_script, image, "--detector_name", detector, "--text_prompt", text, "--conf_threshold", str(conf), "--min_area", str(int(area)), "--box_scale", str(b_scale), "--nms_thr", str(nms), "--sam3_only"]
             log_c = ""
             success = False
+            progress(0, desc="🔍 人物スキャンを開始中...")
             for log_c in run_worker_cmd_yield(cmd, "人物検出"):
+                if "Loading" in log_c: progress(0.2, desc="🧠 モデルを読み込み中...")
+                elif "Running" in log_c: progress(0.5, desc="⚡ 人物を検出中...")
+                elif "Cleaning up" in log_c: progress(0.9, desc="🧹 後処理中...")
                 yield [], {}, "", gr.update(), "🚀 実行中...", log_c
                 if "✅ SUCCESS" in log_c: success = True
             
@@ -284,6 +293,7 @@ This tool integrates the following research works:
                 with open(os.path.join(outputs_dir, "detection_result.json"), "r") as f:
                     det_data = json.load(f)
             choices = [str(d['id']) for d in det_data]
+            progress(1.0, desc="✅ スキャンが完了しました！")
             yield previews, det_data, datetime.now().strftime("%H%M%S"), gr.update(choices=choices, value=choices), "✅ 完了", log_c
  
         det_job = det_btn.click(on_detect, [input_img, detector_sel, text_prompt, conf_threshold, min_area, box_scale, nms_thr], [det_preview, det_results_json, session_id, target_id_checks, det_status_msg, log_output])
@@ -292,8 +302,8 @@ This tool integrates the following research works:
         select_all_btn.click(lambda x: [str(d['id']) for d in x] if x else [], [det_results_json], [target_id_checks])
         deselect_all_btn.click(lambda: [], None, [target_id_checks])
 
-        def on_3d_recovery(image, detector, text, conf, area, b_scale, nms, targets, inf_mode, moge_active, clear, fov):
-            if not image or not targets: yield None, None, None, [], [], [], "対象選択なし", ""
+        def on_3d_recovery(image, detector, text, conf, area, b_scale, nms, targets, inf_mode, moge_active, clear, fov, progress=gr.Progress()):
+            if not image or not targets: yield None, None, None, [], [], [], None, "対象選択なし", ""
             real_inf_mode = "full" if "full" in inf_mode else inf_mode
             cmd = [sys.executable, worker_script, image, "--detector_name", detector, "--text_prompt", text, "--conf_threshold", str(conf), "--min_area", str(int(area)), "--box_scale", str(b_scale), "--nms_thr", str(nms), "--inference_type", real_inf_mode, "--fov", str(fov)]
             if moge_active: cmd.append("--use_moge")
@@ -301,8 +311,27 @@ This tool integrates the following research works:
             cmd.extend(["--target_ids", ",".join(targets)])
             log_c = ""
             success = False
+            
+            # プログレスバーの管理
+            progress(0, desc="🚀 処理を開始中...")
             for log_c in run_worker_cmd_yield(cmd, "3D復元処理"):
-                yield None, None, None, [], [], [], "🚀 実行中...", log_c
+                # ログから進捗をパースしてプログレスバーを更新
+                if "[Step 1]" in log_c: progress(0.1, desc="🔍 Step 1: 人物検出中...")
+                elif "[Step 2]" in log_c: progress(0.2, desc="🗺️ Step 2: 深度推定中...")
+                elif "[Step 3]" in log_c: progress(0.3, desc="🦴 Step 3: 3D形状復元中...")
+                elif "Processing target ID" in log_c:
+                    try:
+                        import re
+                        m = re.search(r"Processing target ID (\d+)", log_c)
+                        if m:
+                            idx = int(m.group(1))
+                            p_val = 0.3 + (idx / len(targets)) * 0.5
+                            progress(p_val, desc=f"⏳ 3D復元中 (ID: {idx})...")
+                    except: pass
+                elif "[Step 4]" in log_c: progress(0.85, desc="📦 Step 4: Blenderファイル生成中...")
+                elif "[Step 5]" in log_c: progress(0.95, desc="📽️ Step 5: プレビューGLB生成中...")
+
+                yield None, None, None, [], [], [], None, "🚀 実行中...", log_c
                 if "✅ SUCCESS" in log_c: success = True
             
             if not success:
@@ -320,11 +349,20 @@ This tool integrates the following research works:
             target_glb = preview_glb if os.path.exists(preview_glb) else None
             
             if not fbx and not bvh:
-                yield None, None, None, [], [], [], "⚠ 完了（ファイルが生成されませんでした）", log_c
+                yield None, None, None, [], [], [], None, "⚠ 完了（ファイルが生成されませんでした）", log_c
             else:
-                yield v_skel if os.path.exists(v_skel) else None, v_moge if os.path.exists(v_moge) else None, target_glb, bvh, fbx, obj, "✅ 完了", log_c
+                progress(0.98, desc="📁 成果物を圧縮中...")
+                import shutil
+                zip_path = os.path.join(outputs_dir, "mppa_results")
+                # 既存のZIPがあれば削除
+                if os.path.exists(zip_path + ".zip"): os.remove(zip_path + ".zip")
+                shutil.make_archive(zip_path, 'zip', outputs_dir)
+                final_zip = zip_path + ".zip"
+                
+                progress(1.0, desc="✅ すべての処理が完了しました！")
+                yield v_skel if os.path.exists(v_skel) else None, v_moge if os.path.exists(v_moge) else None, target_glb, bvh, fbx, obj, final_zip, "✅ 完了", log_c
 
-        rec_job = run_3d_btn.click(on_3d_recovery, [input_img, detector_sel, text_prompt, conf_threshold, min_area, box_scale, nms_thr, target_id_checks, inf_type, use_moge, clear_mem, fov_slider], [vis_skeleton, vis_moge, interactive_3d, output_bvh, output_fbx, output_obj, status_msg, log_output])
+        rec_job = run_3d_btn.click(on_3d_recovery, [input_img, detector_sel, text_prompt, conf_threshold, min_area, box_scale, nms_thr, target_id_checks, inf_type, use_moge, clear_mem, fov_slider], [vis_skeleton, vis_moge, interactive_3d, output_bvh, output_fbx, output_obj, output_zip, status_msg, log_output])
         cancel_3d_btn.click(kill_running_processes, None, [log_output], cancels=[rec_job])
  
         for b in [save_settings_btn1, save_settings_btn2]:
