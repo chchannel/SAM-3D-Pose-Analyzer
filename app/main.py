@@ -85,22 +85,32 @@ def ensure_jpg(image_path):
     """Gradioの一時ファイルやクリップボード画像（PNG等）をJPGに変換し、透過を処理する"""
     if not image_path or not os.path.exists(image_path): 
         return image_path
+    
+    # すでに本関数で最近変換されたJPGファイルならスキップ（無限ループ防止）
+    if image_path.endswith(".jpg") and "converted_input_" in os.path.basename(image_path):
+        return image_path
+
     try:
         img = Image.open(image_path)
-        # すでにRGBのJPGならそのまま
+        # すでにRGBのJPG且つ透過がない場合はそのまま（ただしファイル名の明示化のため再保存推奨）
         if img.format == "JPEG" and img.mode == "RGB":
-            return image_path
+            # return image_path # 念のため一貫性のために下で再保存
+            pass
             
         # 透過がある場合は白背景で塗りつぶす
         if img.mode in ("RGBA", "P", "LA"):
             new_img = Image.new("RGB", img.size, (255, 255, 255))
-            mask = img.split()[-1] if img.mode in ("RGBA", "LA") else None
+            if img.mode in ("RGBA", "LA"):
+                mask = img.split()[-1]
+            else:
+                mask = img.convert("RGBA").split()[-1]
             new_img.paste(img, mask=mask)
             img = new_img
         else:
             img = img.convert("RGB")
             
-        path_jpg = os.path.join(outputs_dir, f"input_{datetime.now().strftime('%H%M%S')}.jpg")
+        # 変換済みファイルであることがわかる名前で保存
+        path_jpg = os.path.join(outputs_dir, f"converted_input_{datetime.now().strftime('%H%M%S')}.jpg")
         img.save(path_jpg, "JPEG", quality=95)
         return path_jpg
     except Exception as e:
@@ -495,6 +505,10 @@ This tool integrates the following research works:
         rec_job = run_3d_btn.click(on_3d_recovery, [input_img, detector_sel, text_prompt, conf_threshold, min_area, box_scale, nms_thr, target_id_checks, inf_type, use_moge, clear_mem, fov_slider, auto_zip, gr.State(False)], [vis_skeleton, vis_moge, interactive_3d, output_bvh, output_fbx, output_obj, output_zip, status_msg, log_output])
         cancel_3d_btn.click(kill_running_processes, None, [log_output], cancels=[rec_job])
  
+        # --- 画像が入力されたら即座にJPGへ変換してプレビューを更新 ---
+        quick_input_img.upload(ensure_jpg, [quick_input_img], [quick_input_img])
+        input_img.upload(ensure_jpg, [input_img], [input_img])
+
         for b in [save_settings_btn1, save_settings_btn2]:
             b.click(save_settings_fn, [detector_sel, text_prompt, conf_threshold, min_area, inf_type, use_moge, clear_mem, fov_slider, box_scale, nms_thr, auto_zip], [status_msg])
         
