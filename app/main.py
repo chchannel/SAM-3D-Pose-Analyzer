@@ -436,10 +436,11 @@ This tool integrates the following research works:
                 try: os.remove(f)
                 except: pass
             
-            # ⚡ 超速モード時は設定を強制上書き
-            real_detector = "vitdet" if is_lightning else detector
-            real_moge = False if is_lightning else moge_active
-            real_inf_mode = "body" if is_lightning else ("full" if "full" in inf_mode else inf_mode)
+            # ⚡ 超速モード (クイック) 時の個別調整
+            # 既に on_quick_recovery から選択された設定が渡されているため、それを尊重する
+            real_detector = detector
+            real_moge = False if is_lightning else moge_active # クイック復元は MoGe をオフにするポリシーを維持
+            real_inf_mode = "body" if "body" in inf_mode else "full"
             
             cmd = [sys.executable, worker_script, image, "--detector_name", real_detector, "--text_prompt", text, "--conf_threshold", str(conf), "--min_area", str(int(area)), "--box_scale", str(b_scale), "--nms_thr", str(nms), "--inference_type", real_inf_mode, "--fov", str(fov)]
             if real_moge: cmd.append("--use_moge")
