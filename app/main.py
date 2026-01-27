@@ -40,7 +40,8 @@ def load_settings():
         "clear_mem": True,
         "fov": 70.0,
         "box_scale": 1.2,
-        "nms_thr": 0.3
+        "nms_thr": 0.3,
+        "auto_zip": True
     }
     if os.path.exists(settings_path):
         try:
@@ -49,11 +50,11 @@ def load_settings():
         except: pass
     return default_settings
 
-def save_settings_fn(detector, text_prompt, conf_threshold, min_area, inference_type, use_moge, clear_mem, fov, box_scale, nms_thr):
+def save_settings_fn(detector, text_prompt, conf_threshold, min_area, inference_type, use_moge, clear_mem, fov, box_scale, nms_thr, auto_zip):
     settings = {
         "detector_name": detector, "text_prompt": text_prompt, "conf_threshold": conf_threshold, "min_area": min_area,
         "inference_type": inference_type, "use_moge": use_moge, "clear_mem": clear_mem,
-        "fov": fov, "box_scale": box_scale, "nms_thr": nms_thr
+        "fov": fov, "box_scale": box_scale, "nms_thr": nms_thr, "auto_zip": auto_zip
     }
     with open(settings_path, "w", encoding="utf-8") as f:
         json.dump(settings, f, indent=4, ensure_ascii=False)
@@ -188,6 +189,11 @@ def create_app():
                             label="VRAMメモリ解放",
                             info="完了ごとにメモリを掃除します。GPUメモリが少ない(8GB以下)場合はON推奨です。"
                         )
+                        auto_zip = gr.Checkbox(
+                            value=defaults.get("auto_zip", True), 
+                            label="完了時に ZIP を自動生成",
+                            info="OFFにすると生成時間を短縮できます。Colabで後から個別に落とす場合はOFFでもOKです。"
+                        )
                         
                         gr.Markdown("### 📏 空間配置設定")
                         with gr.Group():
@@ -302,7 +308,7 @@ This tool integrates the following research works:
         select_all_btn.click(lambda x: [str(d['id']) for d in x] if x else [], [det_results_json], [target_id_checks])
         deselect_all_btn.click(lambda: [], None, [target_id_checks])
 
-        def on_3d_recovery(image, detector, text, conf, area, b_scale, nms, targets, inf_mode, moge_active, clear, fov, progress=gr.Progress()):
+        def on_3d_recovery(image, detector, text, conf, area, b_scale, nms, targets, inf_mode, moge_active, clear, fov, zip_active, progress=gr.Progress()):
             if not image or not targets: yield None, None, None, [], [], [], None, "対象選択なし", ""
             real_inf_mode = "full" if "full" in inf_mode else inf_mode
             cmd = [sys.executable, worker_script, image, "--detector_name", detector, "--text_prompt", text, "--conf_threshold", str(conf), "--min_area", str(int(area)), "--box_scale", str(b_scale), "--nms_thr", str(nms), "--inference_type", real_inf_mode, "--fov", str(fov)]
@@ -351,22 +357,24 @@ This tool integrates the following research works:
             if not fbx and not bvh:
                 yield None, None, None, [], [], [], None, "⚠ 完了（ファイルが生成されませんでした）", log_c
             else:
-                progress(0.98, desc="📁 成果物を圧縮中...")
-                import shutil
-                zip_path = os.path.join(outputs_dir, "mppa_results")
-                # 既存のZIPがあれば削除
-                if os.path.exists(zip_path + ".zip"): os.remove(zip_path + ".zip")
-                shutil.make_archive(zip_path, 'zip', outputs_dir)
-                final_zip = zip_path + ".zip"
+                final_zip = None
+                if zip_active:
+                    progress(0.98, desc="📁 成果物を圧縮中...")
+                    import shutil
+                    zip_path = os.path.join(outputs_dir, "mppa_results")
+                    # 既存のZIPがあれば削除
+                    if os.path.exists(zip_path + ".zip"): os.remove(zip_path + ".zip")
+                    shutil.make_archive(zip_path, 'zip', outputs_dir)
+                    final_zip = zip_path + ".zip"
                 
                 progress(1.0, desc="✅ すべての処理が完了しました！")
                 yield v_skel if os.path.exists(v_skel) else None, v_moge if os.path.exists(v_moge) else None, target_glb, bvh, fbx, obj, final_zip, "✅ 完了", log_c
 
-        rec_job = run_3d_btn.click(on_3d_recovery, [input_img, detector_sel, text_prompt, conf_threshold, min_area, box_scale, nms_thr, target_id_checks, inf_type, use_moge, clear_mem, fov_slider], [vis_skeleton, vis_moge, interactive_3d, output_bvh, output_fbx, output_obj, output_zip, status_msg, log_output])
+        rec_job = run_3d_btn.click(on_3d_recovery, [input_img, detector_sel, text_prompt, conf_threshold, min_area, box_scale, nms_thr, target_id_checks, inf_type, use_moge, clear_mem, fov_slider, auto_zip], [vis_skeleton, vis_moge, interactive_3d, output_bvh, output_fbx, output_obj, output_zip, status_msg, log_output])
         cancel_3d_btn.click(kill_running_processes, None, [log_output], cancels=[rec_job])
  
         for b in [save_settings_btn1, save_settings_btn2]:
-            b.click(save_settings_fn, [detector_sel, text_prompt, conf_threshold, min_area, inf_type, use_moge, clear_mem, fov_slider, box_scale, nms_thr], [status_msg])
+            b.click(save_settings_fn, [detector_sel, text_prompt, conf_threshold, min_area, inf_type, use_moge, clear_mem, fov_slider, box_scale, nms_thr, auto_zip], [status_msg])
         
         open_folder_btn.click(lambda: subprocess.run(["explorer.exe", "."], cwd=outputs_dir), None, None)
 
