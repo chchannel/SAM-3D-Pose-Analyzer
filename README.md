@@ -21,8 +21,8 @@ Meta の **SAM 3D Body** をベースに、単一画像から即座に 3D リフ
 1.  **Hugging Face アカウントの作成**: [Hugging Face](https://huggingface.co/) でアカウントを作成してください。
 2.  **Access Token の取得**: [Settings -> Access Tokens](https://huggingface.co/settings/tokens) から `read` 権限のトークンを取得してください。
 3.  **モデルの利用承諾**: 以下のモデルリポジトリにアクセスし、各ページの **"Agree and access repository"** ボタンを押して利用を承諾してください。
-    - [facebook/sam-3d-body](https://huggingface.co/facebook/sam-3d-body)
-    - ※ SAM3 などの Meta 社モデルを Hugging Face 経由で取得する場合に必要です。
+    - [facebook/sam-3d-body-dinov3](https://huggingface.co/facebook/sam-3d-body-dinov3)
+    - [facebook/sam3](https://huggingface.co/facebook/sam3)
 
 > [!IMPORTANT]
 > **Google Colab ユーザーへ**: 起動時にトークンの入力を求められます。承諾が済んでいないと、モデルのダウンロード時にエラーが発生します。
