@@ -41,7 +41,7 @@ def load_settings():
         "fov": 70.0,
         "box_scale": 1.2,
         "nms_thr": 0.3,
-        "auto_zip": False
+        "auto_zip": True
     }
     if os.path.exists(settings_path):
         try:
@@ -207,9 +207,9 @@ def create_app():
                         save_settings_btn2 = gr.Button("💾 設定保存", size="sm")
 
                         auto_zip = gr.Checkbox(
-                            value=defaults.get("auto_zip", False), 
-                            label="📦 完了時に ZIP を自動生成 (Colab推奨: OFF)",
-                            info="重い処理のため、一括ダウンロードが必要な場合のみONにしてください。個別ダウンロードはZIPなしでも可能です。"
+                            value=defaults.get("auto_zip", True), 
+                            label="📦 完了時に ZIP を自動生成",
+                            info="生成されたすべてのファイルを1つのZIPにまとめます。Colabでの一括ダウンロードに便利です。"
                         )
 
                         gr.Markdown("### 📂 生成ファイル")
