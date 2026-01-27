@@ -1,9 +1,9 @@
+# Core
 numpy
 opencv-python
 pillow
 matplotlib
 gradio
-hydra-core
 scipy
 trimesh
 pyrender
@@ -18,7 +18,8 @@ timm
 python-dotenv
 json-tricks
 triton
-# SAM 3D Body & MoGe Essentials
+
+# SAM 3D Body & MoGe & SAM3
 pytorch-lightning
 roma
 loguru
@@ -38,4 +39,21 @@ fvcore
 iopath
 ninja
 gdown
+ftfy
+regex
+pycocotools
+numba
+python-rapidjson
+scikit-learn
+torchmetrics
+fairscale
+submitit
+zstandard
+rich
+hydra-core
+webdataset
+networkx==3.2.1
+appdirs
+
+# Custom Git dependencies
 git+https://github.com/EasternJournalist/pipeline.git@866f059d2a05cde05e4a52211ec5051fd5f276d6
