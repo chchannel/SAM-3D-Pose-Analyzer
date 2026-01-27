@@ -183,7 +183,9 @@ def create_app():
                             quick_min_area = gr.Slider(100, 50000, value=defaults["quick"]["min_area"], step=100, label="除外サイズ (Min Area)")
                             quick_inf_type = gr.Radio(["body", "full (body+hand)"], value=defaults["quick"]["inference_type"], label="推論モード")
                             quick_fov_slider = gr.Slider(30, 120, value=defaults["quick"]["fov"], label="カメラ画角 (FOV)")
-                            quick_save_btn = gr.Button("💾 設定を保存", size="sm")
+                            with gr.Row():
+                                quick_save_btn = gr.Button("💾 設定を保存", size="sm")
+                                quick_load_adv_btn = gr.Button("📤 アドバンスから読込", size="sm")
                             
                         gr.Markdown("---")
                         gr.Markdown("""
@@ -314,7 +316,9 @@ def create_app():
                                     run_3d_btn = gr.Button("🚀 3D復元開始", variant="primary", scale=2)
                                     cancel_3d_btn = gr.Button("⏹️ 停止", variant="stop", scale=1)
                                 
-                                save_settings_btn2 = gr.Button("💾 設定保存", size="sm")
+                                with gr.Row():
+                                    save_settings_btn2 = gr.Button("💾 設定保存", size="sm")
+                                    adv_load_quick_btn = gr.Button("📥 クイックから読込", size="sm")
 
                                 auto_zip = gr.Checkbox(
                                     value=defaults["advanced"].get("auto_zip", True), 
@@ -602,6 +606,21 @@ This tool integrates the following research works:
             save_settings_fn, 
             [gr.State("quick"), quick_detector_sel, text_prompt, quick_conf_threshold, quick_min_area, quick_inf_type, use_moge, clear_mem, quick_fov_slider, box_scale, nms_thr, auto_zip], 
             [quick_status, status_msg]
+        )
+        
+        # 設定の相互読み込み機能
+        def link_settings_fn(det, conf, area, inf, fov):
+            return det, conf, area, inf, fov, "✅ 他のモードから設定を読み込みました（保存ボタンで確定してください）"
+
+        quick_load_adv_btn.click(
+            link_settings_fn,
+            [detector_sel, conf_threshold, min_area, inf_type, fov_slider],
+            [quick_detector_sel, quick_conf_threshold, quick_min_area, quick_inf_type, quick_fov_slider, quick_status]
+        )
+        adv_load_quick_btn.click(
+            link_settings_fn,
+            [quick_detector_sel, quick_conf_threshold, quick_min_area, quick_inf_type, quick_fov_slider],
+            [detector_sel, conf_threshold, min_area, inf_type, fov_slider, status_msg]
         )
         
         open_folder_btn.click(lambda: subprocess.run(["explorer.exe", "."], cwd=outputs_dir), None, None)
