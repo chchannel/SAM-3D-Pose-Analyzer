@@ -10,7 +10,7 @@ pyrender
 tqdm
 chumpy
 detectron2 @ git+https://github.com/facebookresearch/detectron2.git@v0.6
-huggingface_hub
+huggingface_hub<1.0
 pyyaml
 decord
 yacs

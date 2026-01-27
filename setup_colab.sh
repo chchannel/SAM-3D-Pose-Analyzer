@@ -15,7 +15,7 @@ pip install git+https://github.com/EasternJournalist/utils3d.git@3fab839f0be9931
 pip install triton
 pip install -r requirements.txt
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-pip install gdown huggingface_hub
+pip install gdown "huggingface_hub<1.0"
 
 # 3. 外部リポジトリのセットアップ (Git管理から外したコードを再取得)
 mkdir -p repos

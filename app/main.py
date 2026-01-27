@@ -343,6 +343,13 @@ if __name__ == "__main__":
 
     # Hugging Face Spaces や Docker 環境用の設定
     server_port = int(os.environ.get("PORT", 7860))
+    
+    print("\n" + "="*60)
+    print("🚀 SAM 3D Pose Analyzer を起動しています...")
+    print("Google Colab をご利用の場合、以下の 'public URL' をクリックしてください。")
+    print("※ 'local URL' は Colab では接続できません。")
+    print("="*60 + "\n")
+
     create_app().launch(
         server_name="0.0.0.0", 
         server_port=server_port, 
