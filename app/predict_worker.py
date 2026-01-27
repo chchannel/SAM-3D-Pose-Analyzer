@@ -300,6 +300,7 @@ if __name__ == "__main__":
     if 'm_s3' in locals(): del m_s3
     if 'raw_sam3_masks' in locals(): del raw_sam3_masks
     clear_memory()
+    print("--- Step 1 memory cleaned ---")
 
     if args.sam3_only:
         print(f"✅ SUCCESS. Detection complete in {time.time()-time_start:.2f}s.")
@@ -332,7 +333,9 @@ if __name__ == "__main__":
             # 奥行きを直感的にするために色彩を調整
             cv2.imwrite(os.path.join(OUTPUT_DIR, "output_depth.jpg"), cv2.applyColorMap(d_vis, cv2.COLORMAP_JET))
             
+        print("--- Cleaning up Step 2 memory ---")
         del m_m, img_rgb_t; clear_memory()
+        print("--- Step 2 memory cleaned ---")
 
     # [Step 3] SAM 3DB: Estimation
     print(f"--- [Step 3] SAM 3DB: 3D Recovery (Mode: {args.inference_type}) ---")
@@ -355,6 +358,7 @@ if __name__ == "__main__":
     from sam_3d_body.visualization.skeleton_visualizer import SkeletonVisualizer
     from sam_3d_body.metadata.mhr70 import pose_info
     
+    print("--- Loading SAM 3D Body model... ---")
     model_3d, cfg_3d = load_sam_3d_body(SAM3DB_CKPT, device, MHR_MODEL_PT)
     est = SAM3DBodyEstimator(model_3d, cfg_3d)
     viz = SkeletonVisualizer(radius=4, line_width=2); viz.set_pose_meta(pose_info); v_img = img_bgr.copy()

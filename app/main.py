@@ -437,21 +437,27 @@ This tool integrates the following research works:
             # プログレスバーの管理
             progress(0, desc="🚀 処理を開始中...")
             for log_c in run_worker_cmd_yield(cmd, "3D復元処理"):
-                # ログから進捗をパースしてプログレスバーを更新
-                if "[Step 1]" in log_c: progress(0.1, desc="🔍 Step 1: 人物検出中...")
-                elif "[Step 2]" in log_c: progress(0.2, desc="🗺️ Step 2: 深度推定中...")
-                elif "[Step 3]" in log_c: progress(0.3, desc="🦴 Step 3: 3D形状復元中...")
+                # ログから最新の進捗をパースしてプログレスバーを更新 (後ろから判定することで、常に最新状態を表示)
+                if "[Step 5]" in log_c: 
+                    progress(0.95, desc="📽️ Step 5: プレビュー生成中...")
+                elif "[Step 4]" in log_c: 
+                    progress(0.85, desc="📦 Step 4: ファイル保存中...")
                 elif "Processing target ID" in log_c:
                     try:
                         import re
-                        m = re.search(r"Processing target ID (\d+)", log_c)
-                        if m:
-                            idx = int(m.group(1))
-                            p_val = 0.3 + (idx / len(targets)) * 0.5
-                            progress(p_val, desc=f"⏳ 3D復元中 (ID: {idx})...")
+                        m_targets = re.findall(r"Processing target ID (\d+)", log_c)
+                        if m_targets:
+                            idx = int(m_targets[-1]) # 最後のキャッチしたIDを使う
+                            p_val = 0.3 + (idx / max(1, len(targets))) * 0.5
+                            progress(p_val, desc=f"⏳ 3D復元実行中 (ID: {idx})...")
                     except: pass
-                elif "[Step 4]" in log_c: progress(0.85, desc="📦 Step 4: Blenderファイル生成中...")
-                elif "[Step 5]" in log_c: progress(0.95, desc="📽️ Step 5: プレビューGLB生成中...")
+                elif "Loading" in log_c and log_c.split('\n')[-2] and "Loading" in log_c.split('\n')[-2]:
+                    progress(progress.value if hasattr(progress, 'value') else 0.3, desc="🧠 AIモデルをロード中...")
+                elif "Cleaning up" in log_c and log_c.split('\n')[-2] and "Cleaning up" in log_c.split('\n')[-2]:
+                    progress(progress.value if hasattr(progress, 'value') else 0.1, desc="🧹 メモリを解放中...")
+                elif "[Step 3]" in log_c: progress(0.3, desc="🦴 Step 3: 3D形状復元中...")
+                elif "[Step 2]" in log_c: progress(0.2, desc="🗺️ Step 2: 深度推定中...")
+                elif "[Step 1]" in log_c: progress(0.1, desc="🔍 Step 1: 人物検出中...")
 
                 yield image, None, None, None, [], [], [], None, "🚀 実行中...", log_c + f"\n📸 Input optimized: {os.path.basename(image)}"
                 if "✅ SUCCESS" in log_c: success = True
