@@ -27,16 +27,20 @@ popd
 mkdir -p weights/body/assets
 echo "📦 モデルチェックポイントを準備中..."
 
+# コマンドのエイリアスを設定（Colabのパス問題対策）
+HF_CLI="python3 -m huggingface_hub.commands.huggingface_cli"
+
 # huggingface-cli を使用して facebook/sam-3d-body-dinov3 から取得
-pip install -U "huggingface_hub[cli]"
-huggingface-cli download facebook/sam-3d-body-dinov3 model.ckpt --local-dir weights/body --local-dir-use-symlinks False
-huggingface-cli download facebook/sam-3d-body-dinov3 assets/mhr_model.pt --local-dir weights/body --local-dir-use-symlinks False
+$HF_CLI download facebook/sam-3d-body-dinov3 model.ckpt --local-dir weights/body --local-dir-use-symlinks False
+$HF_CLI download facebook/sam-3d-body-dinov3 assets/mhr_model.pt --local-dir weights/body --local-dir-use-symlinks False
 
 # SAM3 のデフォルトチェックポイント (HumanDetector 用)
 if [ ! -f "weights/body/sam3.pt" ]; then
     echo "📦 SAM3 モデルをダウンロード中..."
-    huggingface-cli download facebook/sam3 model.pt --local-dir weights/body --local-dir-use-symlinks False
-    mv weights/body/model.pt weights/body/sam3.pt
+    $HF_CLI download facebook/sam3 model.pt --local-dir weights/body --local-dir-use-symlinks False
+    if [ -f "weights/body/model.pt" ]; then
+        mv weights/body/model.pt weights/body/sam3.pt
+    fi
 fi
 
 echo "✅ セットアップ完了！"
