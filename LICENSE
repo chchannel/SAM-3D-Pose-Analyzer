@@ -1,0 +1,48 @@
+# License Information (ライセンス情報)
+
+This project, "SAM 3D : Pose Analyzer", is a derivative work that integrates several open-source components. Each component is subject to its original license terms.
+本プロジェクトは、複数のオープンソースコンポーネントを統合した派生物です。各コンポーネントはそれぞれの原著作者のライセンスに従います。
+
+---
+
+## 1. Integrated Components (外部コンポーネント)
+
+### SAM 3D Body (Main Algorithm)
+- **Source**: [facebookresearch/sam-3d-body](https://github.com/facebookresearch/sam-3d-body)
+- **License**: SAM License (Copyright Meta Platforms, Inc.)
+- **See**: [repos/sam-3d-body/LICENSE](repos/sam-3d-body/LICENSE)
+
+### MoGe (Depth Estimation)
+- **Source**: [microsoft/MoGe](https://github.com/microsoft/MoGe)
+- **License**: MIT License (Copyright Microsoft Corporation)
+- **See**: [repos/MoGe/LICENSE](repos/MoGe/LICENSE)
+
+### Detectron2 (Person Detection)
+- **Source**: [facebookresearch/detectron2](https://github.com/facebookresearch/detectron2)
+- **License**: Apache License 2.0 (Copyright Facebook, Inc.)
+- **See**: [repos/detectron2_repo/LICENSE](repos/detectron2_repo/LICENSE)
+
+---
+
+## 2. Wrapper & UI (このプロジェクト独自のコード部分)
+
+**Copyright (c) 2026 Author**
+
+### [English]
+**Proprietary License**
+- **Personal/Research Use**: Free to use for personal, educational, or research purposes.
+- **Commercial Use of Code**: Using this source code for commercial products or paid services is prohibited without prior permission from the author.
+- **Redistribution**: Redistribution or modification of the source code for public use is prohibited without prior permission.
+- **Commercial Use of Output**: **3D models and motion data (BVH/FBX/OBJ etc.) generated using this tool are free for both personal and commercial use.** The restrictions above do not apply to the generated output.
+
+### [日本語]
+**独自の利用規約**
+- **非営利利用**: 個人の学習・研究目的での利用は自由です。
+- **ソースコードの商用利用禁止**: 本ツールのソースコード自体、またはパッケージ化したものを商用目的（販売、有料サービスへの組み込み等）で使用することを禁止します。
+- **無断配布の禁止**: 作者の許可なく本コードを改造して配布したり、公開することを禁止します。
+- **出力データ（成果物）の扱い**: 本ツールを使用して生成された **3Dモデルやモーションデータ（BVH/FBX/OBJ等）は、商用・非商用を問わず自由に使用・配布することができます。**
+
+---
+
+By using this software, you agree to be bound by the terms of the respective licenses listed above.
+本ソフトウェアを使用することで、上記のライセンス条項に同意したものとみなされます。

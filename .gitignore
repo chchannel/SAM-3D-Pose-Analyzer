@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+env/
+
+# Data & Models (巨大または自動生成なので除外)
+weights/
+repos/
+output/
+app/outputs/
+app/last_inference_vis.jpg
+app/settings.json
+
+# Temporary Files & Logs
+*.log
+app/*.jpg
+app/*.png
+mppa_env_backup.yml
+
+# Docs & Reference (動作に関係ないもの)
+docs/
+assets/
+app/wrapper doc/
+
+# OS
+.DS_Store
+Thumbs.db
