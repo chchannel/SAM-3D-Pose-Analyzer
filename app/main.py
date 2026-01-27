@@ -41,7 +41,7 @@ def load_settings():
         "fov": 70.0,
         "box_scale": 1.2,
         "nms_thr": 0.3,
-        "auto_zip": True
+        "auto_zip": False
     }
     if os.path.exists(settings_path):
         try:
@@ -189,11 +189,6 @@ def create_app():
                             label="VRAMメモリ解放",
                             info="完了ごとにメモリを掃除します。GPUメモリが少ない(8GB以下)場合はON推奨です。"
                         )
-                        auto_zip = gr.Checkbox(
-                            value=defaults.get("auto_zip", True), 
-                            label="完了時に ZIP を自動生成",
-                            info="OFFにすると生成時間を短縮できます。Colabで後から個別に落とす場合はOFFでもOKです。"
-                        )
                         
                         gr.Markdown("### 📏 空間配置設定")
                         with gr.Group():
@@ -210,6 +205,12 @@ def create_app():
                             cancel_3d_btn = gr.Button("⏹️ 停止", variant="stop", scale=1)
                         
                         save_settings_btn2 = gr.Button("💾 設定保存", size="sm")
+
+                        auto_zip = gr.Checkbox(
+                            value=defaults.get("auto_zip", False), 
+                            label="📦 完了時に ZIP を自動生成 (Colab推奨: OFF)",
+                            info="重い処理のため、一括ダウンロードが必要な場合のみONにしてください。個別ダウンロードはZIPなしでも可能です。"
+                        )
 
                         gr.Markdown("### 📂 生成ファイル")
                         with gr.Group():
@@ -361,11 +362,24 @@ This tool integrates the following research works:
                 if zip_active:
                     progress(0.98, desc="📁 成果物を圧縮中...")
                     import shutil
-                    zip_path = os.path.join(outputs_dir, "mppa_results")
-                    # 既存のZIPがあれば削除
-                    if os.path.exists(zip_path + ".zip"): os.remove(zip_path + ".zip")
-                    shutil.make_archive(zip_path, 'zip', outputs_dir)
-                    final_zip = zip_path + ".zip"
+                    # ⚠️ 重要: outputs_dir 自体を zip すると自分自身を含んで無限ループになるため、
+                    # 一時フォルダに必要なファイルだけを集めてから zip します。
+                    with tempfile.TemporaryDirectory() as tmpzip:
+                        zip_src = os.path.join(tmpzip, "results")
+                        os.makedirs(zip_src)
+                        
+                        # 成果物ファイルをコピー
+                        for f in bvh + fbx + obj:
+                            if os.path.exists(f): shutil.copy(f, zip_src)
+                        if os.path.exists(preview_glb): shutil.copy(preview_glb, zip_src)
+                        if os.path.exists(v_skel): shutil.copy(v_skel, zip_src)
+                        if os.path.exists(v_moge): shutil.copy(v_moge, zip_src)
+                        
+                        # ZIP作成 (outputs_dir の外、または固有の名前で作成)
+                        zip_base = os.path.join(outputs_dir, "mppa_results")
+                        if os.path.exists(zip_base + ".zip"): os.remove(zip_base + ".zip")
+                        shutil.make_archive(zip_base, 'zip', zip_src)
+                        final_zip = zip_base + ".zip"
                 
                 progress(1.0, desc="✅ すべての処理が完了しました！")
                 yield v_skel if os.path.exists(v_skel) else None, v_moge if os.path.exists(v_moge) else None, target_glb, bvh, fbx, obj, final_zip, "✅ 完了", log_c
