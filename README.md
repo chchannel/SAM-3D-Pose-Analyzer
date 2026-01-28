@@ -44,16 +44,16 @@ Meta の **SAM 3D Body** をベースに、単一画像から即座に 3D リフ
 
 ---
 
-### 1. Google Colab (推奨)
+### 1. Google Colab 
 ブラウザだけで今すぐ試せます。
 
 - [**SAM 3D Pose Analyzer on Colab**](https://colab.research.google.com/github/chchannel/SAM-3D-Pose-Analyzer/blob/main/sam_3d_pose_analyzer_colab.ipynb)
     - **Step 1**: 実行時に Hugging Face トークンを入力します。
     - **Step 2**: 環境構築（約 10〜15 分）。
-    - **Step 3**: 起動後の **⚡ クイック復元タブ** を使えば、約 60秒で 3D モデルが手に入ります。
+    - **Step 3**: 起動後の **⚡ クイック復元タブ** を使えば、約 60~120秒で 3D モデルが手に入ります。
 
 ### 2. ローカル環境 (Local Installation)
-WSL2 または Linux 環境での動作を想定しています。
+WSL2 または Linux 環境での動作を想定しています。RTX3060tiで動作確認しました。
 
 ```bash
 # リポジトリの取得
@@ -68,6 +68,7 @@ bash setup_colab.sh
 
 # アプリの起動
 python app/main.py
+launch_sam3d.batをクリックすることでも起動します
 ```
 
 ## 📜 ライセンス (Licensing)
@@ -92,6 +93,7 @@ python app/main.py
 
 ---
 *Developed by Antigravity (AI Assistant) & USER.*
+
 
 
 
