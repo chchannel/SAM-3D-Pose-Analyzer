@@ -28,9 +28,9 @@ Meta の **SAM 3D Body** をベースに、単一画像から即座に 3D リフ
 ## ✨ サポートしている拡張子
 
 - **FBX**: アニメーション用ボーン + スキニング済みメッシュ
-- **BVH**: ポーズデータ (MMD/Unity/CLIP STUDIO PAINT 互換)
+- **BVH**: ポーズデータ (Unity/CLIP STUDIO PAINT 互換)
 - **OBJ**: 静止メッシュデータ
-- **GLB**: Web/AR 用バイナリ形式
+- **GLB**: Web/AR 用バイナリ形式（ブラウザ上で確認できます）
 
 ## 🚀 実行方法 (Quick Start)
 
@@ -92,4 +92,5 @@ python app/main.py
 
 ---
 *Developed by Antigravity (AI Assistant) & USER.*
+
 
